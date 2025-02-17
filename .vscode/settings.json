@@ -10,4 +10,8 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always"
   },
+  "files.associations": {
+    "valarray": "cpp",
+    "iostream": "cpp"
+  },
 }

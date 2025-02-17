@@ -1,4 +1,6 @@
-1 2 
-1 1 1 2 
-4 5 5 5 1 1 2 1 
-1 1 2 2 1 1 3 3 1 1 
+A -> Aa a ε 
+B -> Bb b a 
+S -> BAB BB 
+bb -> Accepted
+baab -> Accepted
+ba -> Accepted
