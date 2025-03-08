@@ -12,6 +12,11 @@
   },
   "files.associations": {
     "valarray": "cpp",
-    "iostream": "cpp"
+    "iostream": "cpp",
+    "regex": "cpp",
+    "span": "cpp",
+    "chrono": "cpp",
+    "type_traits": "cpp",
+    "ostream": "cpp"
   },
 }

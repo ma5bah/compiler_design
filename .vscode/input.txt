@@ -1,8 +1,12 @@
+6
+a 0 b
+a 1 a
+b 0 b
+b 1 c
+c 0 b
+c 1 c
+c
 3
-S BAB
-A Aa a ε
-B Bb b a
-3
-bb
-baab
-ba
+010
+1101
+100

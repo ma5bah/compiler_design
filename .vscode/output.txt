@@ -1,6 +1,0 @@
-A -> Aa a ε 
-B -> Bb b a 
-S -> BAB BB 
-bb -> Accepted
-baab -> Accepted
-ba -> Accepted

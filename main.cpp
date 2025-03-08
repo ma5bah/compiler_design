@@ -1,143 +1,174 @@
 #include <bits/stdc++.h>
+
 using namespace std;
 
+using Token = pair<double, int>;
+
+template <typename T, typename U>
+ostream& operator<<(ostream& os, const pair<T, U>& p)
+{
+    os << "(" << p.first << ", " << p.second << ")";
+    return os;
+}
+
 template <typename T>
-void print_vector(const vector<T>& vec) {
+void print_vector(const vector<T>& vec)
+{
     for (const T& element : vec) {
         cout << element << " ";
     }
     cout << endl;
 }
-
-vector<string> split_string(const string& input) {
-    vector<string> tokens;
-    stringstream ss(input);
-    string token;
-    while (ss >> token) {
-        tokens.push_back(token);
+template <typename T>
+void print_stack(stack<T> s)
+{
+    vector<T> v;
+    while (!s.empty()) {
+        v.push_back(s.top());
+        s.pop();
     }
+    reverse(v.begin(), v.end());
+    print_vector(v);
+}
+
+vector<Token> extractTokens(const string& expression)
+{
+    vector<Token> tokens;
+    int n = expression.size();
+
+    for (int i = 0; i < n; i++) {
+        if (expression[i] == ' ')
+            continue;
+
+        string number = "";
+        if (isdigit(expression[i]) || expression[i] == '.') {
+            while (i < n && (isdigit(expression[i]) || expression[i] == '.'))
+                number += expression[i++];
+            i--;
+            tokens.emplace_back(stod(number), 0);
+        } else {
+            int type = (expression[i] == '(' || expression[i] == ')') ? 2 : 1;
+            tokens.emplace_back((double)expression[i], type);
+        }
+    }
+
     return tokens;
 }
 
-map<string, vector<string>> context_free_grammar;
-
-bool is_terminal(const string& symbol) {
-    for (char c : symbol) {
-        if (!islower(c))
-            return false;
-    }
-    return true;
+double evaluate(double first, double second, char operation)
+{
+    if (operation == '+')
+        return first + second;
+    if (operation == '-')
+        return first - second;
+    if (operation == '*')
+        return first * second;
+    if (operation == '/')
+        return first / second;
+    if (operation == '%')
+        return (int)first % (int)second;
+    if (operation == '^')
+        return pow(first, second);
+    return 0;
 }
 
-bool validate_string(const string& current, const string& target) {
-    if (is_terminal(current)) {
-        return current == target;
-    }
-
-    if (current.size() > target.size()) {
-        return false;
-    }
-
-    bool is_valid = false;
-
-    for (size_t i = 0; i < current.size(); i++) {
-        string nonterminal = current.substr(i, 1);
-
-        if (context_free_grammar.count(nonterminal)) {
-            for (const string& replacement : context_free_grammar[nonterminal]) {
-                string updated_string = current;
-                if (replacement == "ε") {
-                    updated_string.erase(i, 1);
-                } else {
-                    updated_string.replace(i, 1, replacement);
-                }
-
-                is_valid |= validate_string(updated_string, target);
-
-                if (is_valid)
-                    return true;
+void displayExpression(const vector<Token>& tokens, const vector<int>& visited)
+{
+    for (int i = 0; i < tokens.size(); i++) {
+        if (!visited[i]) {
+            if (tokens[i].second)
+                cout << (char)(int)tokens[i].first;
+            else {
+                if (tokens[i].first < 0 && i != 0)
+                    cout << '(';
+                cout << tokens[i].first;
+                if (tokens[i].first < 0 && i != 0)
+                    cout << ')';
             }
         }
     }
-
-    return is_valid;
+    cout << endl;
 }
 
-void apply_epsilon_rules() {
-    map<string, vector<string>> updated_grammar = context_free_grammar;
+void processOperator(stack<Token>& operands, stack<pair<char, int>>& operators, vector<Token>& tokens, vector<int>& visited)
+{
+    cout << "Process Operator" << endl;
+    print_stack(operators);
+    cout << "Operands" << endl;
+    print_stack(operands);
+    cout << "Visited" << endl;
+    print_vector(visited);
+    cout << "Tokens" << endl;
+    print_vector(tokens);
+    cout << endl;
 
-    for (auto& [nonterminal, productions] : context_free_grammar) {
-        for (const string& production : productions) {
-            if (production == "ε") {
-                for (auto& [lhs, rhs_list] : context_free_grammar) {
-                    vector<string> modified_rules;
-                    for (const string& rhs : rhs_list) {
-                        size_t pos = rhs.find(nonterminal);
-                        if (pos != string::npos) {
-                            string modified_production = rhs;
-                            modified_production.erase(pos, nonterminal.length());
-                            modified_rules.push_back(modified_production);
-                        }
-                    }
+    Token second = operands.top();
+    operands.pop();
+    Token first = operands.top();
+    operands.pop();
+    pair<char, int> op = operators.top();
+    operators.pop();
 
-                    if (lhs == "S") {
-                        for (const string& new_rule : modified_rules) {
-                            if (!new_rule.empty()) {
-                                updated_grammar["S"].push_back(new_rule);
-                            }
-                        }
-                    }
-                }
+    double result = evaluate(first.first, second.first, op.first);
+    operands.push({ result, first.second });
+
+    tokens[first.second] = { result, 0 };
+    for (int j = first.second + 1; j <= second.second; j++)
+        visited[j] = 1;
+
+    displayExpression(tokens, visited);
+}
+
+void evaluateExpression(vector<Token>& tokens)
+{
+    map<char, int> precedence = { { '+', 1 }, { '-', 1 }, { '*', 2 }, { '/', 2 }, { '%', 2 }, { '^', 3 } };
+
+    int tokenCount = tokens.size();
+    vector<int> visited(tokenCount, 0);
+
+    stack<pair<char, int>> operators;
+    stack<Token> operands;
+
+    displayExpression(tokens, visited);
+
+    for (int i = 0; i < tokenCount; i++) {
+        double number = tokens[i].first;
+        int type = tokens[i].second;
+
+        if (type == 0) {
+            operands.push({ number, i });
+        } else if (type == 1) {
+            char operation = (int)number;
+            while (!operators.empty() && precedence[operation] <= precedence[operators.top().first]) {
+                processOperator(operands, operators, tokens, visited);
             }
-        }
-    }
-
-    context_free_grammar = updated_grammar;
-}
-
-int main() {
-    int num_productions;
-    cin >> num_productions;
-    cin.ignore();
-
-    string production_rule;
-    for (int i = 0; i < num_productions; i++) {
-        getline(cin, production_rule);
-        vector<string> tokens = split_string(production_rule);
-
-        if (tokens.empty())
-            continue;
-
-        string nonterminal = tokens[0];
-
-        for (size_t j = 1; j < tokens.size(); j++) {
-            context_free_grammar[nonterminal].push_back(tokens[j]);
-            // if (tokens[j] == "ε") {
-            //     swap(context_free_grammar[nonterminal].back(), context_free_grammar[nonterminal][0]);
-            // }
-        }
-    }
-
-    apply_epsilon_rules();
-
-    for (auto& [lhs, rhs_list] : context_free_grammar) {
-        cout << lhs << " -> ";
-        print_vector(rhs_list);
-    }
-
-    int num_test_cases;
-    cin >> num_test_cases;
-    cin.ignore();
-
-    while (num_test_cases--) {
-        string test_string;
-        cin >> test_string;
-        if (validate_string("S", test_string)) {
-            cout << test_string << " -> Accepted" << endl;
+            operators.push({ number, i });
         } else {
-            cout << test_string << " -> Rejected" << endl;
+            char bracket = (int)number;
+            if (bracket == '(') {
+                operators.push({ bracket, i });
+                continue;
+            }
+            processOperator(operands, operators, tokens, visited);
+            operators.pop();
         }
     }
+
+    while (!operators.empty()) {
+        processOperator(operands, operators, tokens, visited);
+    }
+}
+
+int main()
+{
+    string expression;
+    getline(cin, expression);
+    cout << expression << endl;
+    vector<Token> tokens = extractTokens(expression);
+    // for(auto token:tokens){
+    //     cout<<token.first<<" "<<token.second<<endl;
+    // }
+    evaluateExpression(tokens);
 
     return 0;
 }
